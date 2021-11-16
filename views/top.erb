@@ -1,3 +1,6 @@
 <a href="/new">新規作成</a>
-<% #すべてのメモを変数に格納 %>
-<% #繰り返し処理でメモを表示 %>
+<% @memo_titles.each do |title| %>
+  <a href="#">
+    <p><%= "◆ #{title}" %></p>
+  </a>
+<% end %>
