@@ -1,5 +1,7 @@
-<form action="/memos/" method="POST">
-  <p><input name="memo_title" type=text></p>
-  <p><textarea name="memo_body" type=text></textarea></p>
+<form action="/memos/<%= "#{@selected_number}.json" %>" method="POST">
+  <h2>編集</h2>
+  <input type="hidden" name="_method" value="PATCH">
+  <p><input name="memo_title" type=text value=<%= @selected_title %>></p>
+  <p><textarea name="memo_body" type=text ><%= @selected_body %></textarea></p>
     <input type="submit" value="保存">
 </form>
