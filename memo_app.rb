@@ -23,23 +23,12 @@ end
 
 get '/' do
   collect_memo_data
-  #file_names = Dir.glob("*", base: "./memos")
-  #memo_files = []
-  #file_names.each do |name|
-  #  memo_files << File.open("./memos/#{name}") do |file|
-  #    JSON.load(file)
-  #  end
-  #end
   sort_by_created_at
-  #@memo_files = @memo_files.sort do |a, b|
-  #               a["created_at"] <=> b["created_at"]
-  #             end
   @memo_files = @memo_files.reverse
   @memo_titles = []
   @memo_files.each do |memo|
     @memo_titles << memo["title"]
   end
-  #@memo_titles.sort
   erb :top
 end
 
@@ -60,10 +49,21 @@ post '/memos' do
   erb :created 
 end
 
-get '/memos/*' do |num|
+get '/memos/show/:number' do |n|
   collect_memo_data
   sort_by_created_at
-  index = num.to_i - 1
+  index = n.to_i - 1
+  selected_memo = @memo_files[index]
+  @selected_number = selected_memo["number"]
+  @selected_title = selected_memo["title"]
+  @selected_body = selected_memo["body"]
+  erb :show
+end
+
+get '/memos/edit/:number' do |n|
+  collect_memo_data
+  sort_by_created_at
+  index = n.to_i - 1
   selected_memo = @memo_files[index]
   @selected_number = selected_memo["number"]
   @selected_title = selected_memo["title"]
@@ -82,4 +82,9 @@ patch '/memos/:file_number' do
     JSON.dump(@original_file, file)
   end
   erb :edited
+end
+
+delete '/memos/:number' do |n|
+  File.delete("./memos/memo_#{n}")
+  erb :deleted
 end

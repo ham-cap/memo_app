@@ -1,6 +1,6 @@
 <a href="/new">新規作成</a>
 <% @memo_files.each do |file| %>
-  <a href="/memos/<%= file["number"] %>">
+  <a href="/memos/show/<%= file["number"] %>">
     <p><%= "◆ #{file["title"]}" %></p>
   </a>
 <% end %>
