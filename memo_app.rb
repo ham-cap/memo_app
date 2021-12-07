@@ -38,7 +38,6 @@ get '/' do
   collect_memo_data
   sort_by_created_at
   reverse_memos_order
-  #@memo_files = @memo_files.reverse
   @memo_titles = []
   @memo_files.each do |memo|
     @memo_titles << memo["title"]
@@ -66,24 +65,14 @@ end
 get '/memos/show/:number' do |n|
   collect_memo_data
   sort_by_created_at
-  #index = n.to_i - 1
   find_selected_memo(n)
-  #selected_memo = @memo_files[index]
-  #@selected_number = selected_memo["number"]
-  #@selected_title = selected_memo["title"]
-  #@selected_body = selected_memo["body"]
   erb :show
 end
 
 get '/memos/edit/:number' do |n|
   collect_memo_data
   sort_by_created_at
-  #index = n.to_i - 1
   find_selected_memo(n)
-  #selected_memo = @memo_files[index]
-  #@selected_number = selected_memo["number"]
-  #@selected_title = selected_memo["title"]
-  #@selected_body = selected_memo["body"]
   erb :edit
 end
 
