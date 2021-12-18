@@ -9,13 +9,10 @@ require 'cgi'
 
 def collect_memo_data
   file_names = Dir.glob('*', base: './memos')
-  @memo_files = []
-  file_names.each do |name|
-    @memo_files << File.open("./memos/#{name}") do |file|
-      read_line = file.read
-      JSON.parse(read_line)
-    end
-  end
+  @memo_files = file_names.map { |name| File.open("./memos/#{name}") do |file| 
+                  read_line = file.read
+                  JSON.parse(read_line)
+                end }
 end
 
 def sort_by_created_at
