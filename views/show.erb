@@ -1,8 +1,8 @@
-<p>No.：<%= @selected_number %></P>
-<p>タイトル：<%= @selected_title %></p>
-<p>本文： <%= @selected_body %></p>
-<a href='/memos/edit/<%= "#{@selected_number}" %>'>編集</a>
-<form action="/memos/<%= "#{@selected_number}.json" %>" method="POST">
+<p>No.：<%= @selected_memo["number"] %></P>
+<p>タイトル：<%= @selected_memo["title"] %></p>
+<p>本文： <%= @selected_memo["body"] %></p>
+<a href='/memos/edit/<%= "#{@selected_memo["number"]}" %>'>編集</a>
+<form action="/memos/<%= "#{@selected_memo["number"]}.json" %>" method="POST">
   <input type="hidden" name="_method" value="DELETE">
   <input type="submit" value="削除">
 </form>

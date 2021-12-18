@@ -9,10 +9,12 @@ require 'cgi'
 
 def collect_memo_data
   file_names = Dir.glob('*', base: './memos')
-  @memo_files = file_names.map { |name| File.open("./memos/#{name}") do |file| 
-                  read_line = file.read
-                  JSON.parse(read_line)
-                end }
+  @memo_files = file_names.map do |name|
+    File.open("./memos/#{name}") do |file|
+      read_line = file.read
+      JSON.parse(read_line)
+    end
+  end
 end
 
 def sort_by_created_at
@@ -25,10 +27,7 @@ end
 
 def find_selected_memo(number)
   index = number.to_i - 1
-  selected_memo = @memo_files[index]
-  @selected_number = selected_memo['number']
-  @selected_title = selected_memo['title']
-  @selected_body = selected_memo['body']
+  @selected_memo = @memo_files[index]
 end
 
 get '/' do
