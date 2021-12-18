@@ -34,10 +34,6 @@ get '/' do
   collect_memo_data
   sort_by_created_at
   reverse_memos_order
-  @memo_titles = []
-  @memo_files.each do |memo|
-    @memo_titles << memo['title']
-  end
   erb :top
 end
 
@@ -53,7 +49,7 @@ post '/memos' do
   number_of_files = Dir.glob('*', base: './memos').size
   @latest_number = number_of_files + 1
   File.open("./memos/memo_#{@latest_number}.json", 'w') do |file|
-    JSON.dump({ 'id' => id, 'number' => @latest_number, 'title' => @title, 'body' => @body, 'created_at' => @created_at }, file)
+    JSON.dump({ id: id, number: @latest_number, title: @title, body: @body, created_at: @created_at }, file)
   end
   erb :created
 end
