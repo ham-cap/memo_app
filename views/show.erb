@@ -1,7 +1,7 @@
 <p>No.：<%= @selected_memo["number"] %></P>
 <p>タイトル：<%= @selected_memo["title"] %></p>
 <p>本文： <%= @selected_memo["body"] %></p>
-<a href='/memos/edit/<%= "#{@selected_memo["number"]}" %>'>編集</a>
+<a href='/memos/<%= "#{@selected_memo["number"]}" %>/edit'>編集</a>
 <form action="/memos/<%= "#{@selected_memo["number"]}.json" %>" method="POST">
   <input type="hidden" name="_method" value="DELETE">
   <input type="submit" value="削除">

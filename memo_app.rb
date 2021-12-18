@@ -54,14 +54,14 @@ post '/memos' do
   erb :created
 end
 
-get '/memos/show/:number' do |number|
+get '/memos/:number' do |number|
   collect_memo_data
   sort_by_created_at
   find_selected_memo(number)
   erb :show
 end
 
-get '/memos/edit/:number' do |number|
+get '/memos/:number/edit' do |number|
   collect_memo_data
   sort_by_created_at
   find_selected_memo(number)
