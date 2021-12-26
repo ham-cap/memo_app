@@ -26,8 +26,8 @@ def reverse_memos_order
 end
 
 def find_selected_memo(number)
-  index = number.to_i - 1
-  @selected_memo = @memo_files[index]
+  collect_memo_data
+  @selected_memo = @memo_files.find { |file| file['number'] == number.to_i }
 end
 
 get '/' do
@@ -43,8 +43,8 @@ end
 
 post '/memos' do
   id = SecureRandom.uuid
-  @title = params[:memo_title]#CGI.escapeHTML(params[:memo_title])
-  @body = params[:memo_body]#CGI.escapeHTML(params[:memo_body])
+  @title = params[:memo_title]
+  @body = params[:memo_body]
   @created_at = Time.now
   number_of_files = Dir.glob('*', base: './memos').size
   @latest_number = number_of_files + 1
@@ -73,8 +73,8 @@ patch '/memos/:file_number' do
     read_line = file.read
     JSON.parse(read_line)
   end
-  @original_file['title'] = params[:memo_title]#CGI.escapeHTML(params[:memo_title])
-  @original_file['body'] = params[:memo_body]#CGI.escapeHTML(params[:memo_body])
+  @original_file['title'] = params[:memo_title]
+  @original_file['body'] = params[:memo_body]
   @original_file['edited_at'] = Time.now
   File.open("./memos/memo_#{params[:file_number]}.json", 'w') do |file|
     JSON.dump(@original_file, file)
