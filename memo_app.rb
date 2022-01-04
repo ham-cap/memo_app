@@ -27,7 +27,7 @@ end
 
 def find_selected_memo(number)
   collect_memo_data
-  @selected_memo = @memo_files.find { |file| file['number'] == number.to_i }
+  @selected_memo = @memo_files.find { |file| file['number'].chomp.to_i == number.to_i }
 end
 
 get '/' do
@@ -46,9 +46,22 @@ post '/memos' do
   @title = params[:memo_title]
   @body = params[:memo_body]
   @created_at = Time.now
-  number_of_files = Dir.glob('*', base: './memos').size
-  @latest_number = number_of_files + 1
-  File.open("./memos/memo_#{@latest_number}.json", 'w') do |file|
+  File.open('used_number.txt', 'r') do |file|
+    @original_array = file.readlines.map(&:to_i)
+  end
+  File.open('used_number.txt', 'w') do |file|
+    if @original_array.size.zero?
+      file.puts(1)
+    else
+      @latest_number = @original_array.max + 1
+      file.puts(@original_array)
+      file.puts(@latest_number)
+    end
+  end
+  File.open("./memos/#{id}.json", 'w+') do |file|
+    File.open('used_number.txt') do |used_number|
+      @latest_number = used_number.readlines.max
+    end
     JSON.dump({ id: id, number: @latest_number, title: @title, body: @body, created_at: @created_at }, file)
   end
   erb :created
@@ -69,20 +82,22 @@ get '/memos/:number/edit' do |number|
 end
 
 patch '/memos/:file_number' do
-  @original_file = File.open("./memos/memo_#{params[:file_number]}.json") do |file|
+  find_selected_memo(params[:file_number])
+  @original_file = File.open("./memos/#{@selected_memo['id']}.json") do |file|
     read_line = file.read
     JSON.parse(read_line)
   end
   @original_file['title'] = params[:memo_title]
   @original_file['body'] = params[:memo_body]
   @original_file['edited_at'] = Time.now
-  File.open("./memos/memo_#{params[:file_number]}.json", 'w') do |file|
+  File.open("./memos/#{@selected_memo['id']}.json", 'w') do |file|
     JSON.dump(@original_file, file)
   end
   erb :edited
 end
 
-delete '/memos/:number' do |n|
-  File.delete("./memos/memo_#{n}")
+delete '/memos/:number' do |_n|
+  find_selected_memo(params[:number])
+  File.delete("./memos/#{@selected_memo['id']}.json")
   erb :deleted
 end
