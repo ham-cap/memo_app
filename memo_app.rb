@@ -58,7 +58,7 @@ post '/memos' do
       file.puts(@latest_number)
     end
   end
-  File.open("./memos/#{id}.json", 'w+') do |file|
+  File.open("./memos/#{id}.json", 'w') do |file|
     JSON.dump({ id: id, number: @latest_number, title: @title, body: @body, created_at: @created_at }, file)
   end
   erb :created
