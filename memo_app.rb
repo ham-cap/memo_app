@@ -27,7 +27,7 @@ end
 
 def find_selected_memo(number)
   collect_memo_data
-  @selected_memo = @memo_files.find { |file| file['number'].chomp.to_i == number.to_i }
+  @selected_memo = @memo_files.find { |file| file['number'] == number.to_i }
 end
 
 get '/' do
@@ -47,21 +47,18 @@ post '/memos' do
   @body = params[:memo_body]
   @created_at = Time.now
   File.open('used_number.txt', 'r') do |file|
-    @original_array = file.readlines.map(&:to_i)
+    @original_array= file.readlines.map(&:to_i)
   end
   File.open('used_number.txt', 'w') do |file|
-    if @original_array.size.zero?
-      file.puts(1)
+    if @original_array.empty?
+      @latest_number = 1
+      file.puts(@latest_number)
     else
       @latest_number = @original_array.max + 1
-      file.puts(@original_array)
       file.puts(@latest_number)
     end
   end
   File.open("./memos/#{id}.json", 'w+') do |file|
-    File.open('used_number.txt') do |used_number|
-      @latest_number = used_number.readlines.max
-    end
     JSON.dump({ id: id, number: @latest_number, title: @title, body: @body, created_at: @created_at }, file)
   end
   erb :created
