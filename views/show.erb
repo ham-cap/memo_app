@@ -1,0 +1,9 @@
+<p>No.：<%= @selected_memo["number"] %></P>
+<p>タイトル：<%= CGI.escapeHTML(@selected_memo["title"]) %></p>
+<p>本文： <%= CGI.escapeHTML(@selected_memo["body"]) %></p>
+<a href='/memos/<%= "#{@selected_memo["number"]}" %>/edit'>編集</a>
+<form action="/memos/<%= "#{@selected_memo["number"]}.json" %>" method="POST">
+  <input type="hidden" name="_method" value="DELETE">
+  <input type="submit" value="削除">
+</form>
+<a href='/'>TOPへ戻る</a>

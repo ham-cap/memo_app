@@ -1,0 +1,7 @@
+<h2>TOP</h2>
+<a href="/new">新規作成</a>
+<% @memo_files.each do |file| %>
+  <a href="/memos/<%= file["number"] %>">
+    <p><%= "◆ #{CGI.escapeHTML(file["title"])}" %></p>
+  </a>
+<% end %>
