@@ -6,14 +6,39 @@ require 'sinatra/reloader'
 require 'json'
 require 'byebug'
 require 'cgi'
+require 'pg'
 
-def collect_memo_data
-  file_names = Dir.glob('*', base: './memos')
-  @memo_files = file_names.map do |name|
-    File.open("./memos/#{name}") do |file|
-      read_line = file.read
-      JSON.parse(read_line)
-    end
+def make_a_connection
+  host = '133.167.114.88'
+  port = 5432
+  db = 'memodb'
+  user = 'postgres'
+  password = 'm4GxZjes'
+  @connection = PG::Connection.new(host: host, port: port, dbname: db, user: user, password: password)
+end
+
+class Memo
+  attr_reader :id, :title, :body, :created_at, :edited_at
+
+  def initialize(hash)
+    @id = hash["id"]
+    @title = hash["title"]
+    @body = hash["body"]
+    @created_at = hash["created_at"]
+    @edited_at = hash["edited_at"]
+  end
+  
+  def self.create_a_memo_array
+    make_a_connection
+    all_memo_data = @connection.exec("SELECT * FROM memos").to_a
+    all_memo_data.map{|hash| Memo.new(hash)}.reverse
+  end
+
+  def self.find_a_memo(id)
+    make_a_connection
+    memo_data = @connection.exec("SELECT * FROM memos WHERE id = #{id}").to_a
+    memo = memo_data.map{|hash| Memo.new(hash)}
+    memo[0]
   end
 end
 
@@ -31,9 +56,7 @@ def find_selected_memo(number)
 end
 
 get '/' do
-  collect_memo_data
-  sort_by_created_at
-  reverse_memos_order
+  @memo_array = Memo.create_a_memo_array
   erb :top
 end
 
@@ -42,59 +65,36 @@ get '/new' do
 end
 
 post '/memos' do
-  id = SecureRandom.uuid
   @title = params[:memo_title]
   @body = params[:memo_body]
   @created_at = Time.now
-  File.open('used_number.txt', 'r') do |file|
-    @original_array= file.readlines.map(&:to_i)
-  end
-  File.open('used_number.txt', 'w') do |file|
-    if @original_array.empty?
-      @latest_number = 1
-      file.puts(@latest_number)
-    else
-      @latest_number = @original_array.max + 1
-      file.puts(@latest_number)
-    end
-  end
-  File.open("./memos/#{id}.json", 'w') do |file|
-    JSON.dump({ id: id, number: @latest_number, title: @title, body: @body, created_at: @created_at }, file)
-  end
+  make_a_connection
+  @connection.exec("INSERT INTO memos (title, body, created_at) VALUES ('#{@title}', '#{@body}', '#{@created_at}')")
   erb :created
 end
 
-get '/memos/:number' do |number|
-  collect_memo_data
-  sort_by_created_at
-  find_selected_memo(number)
+get '/memos/:id' do |id|
+  @selected_memo = Memo.find_a_memo(id)
   erb :show
 end
 
-get '/memos/:number/edit' do |number|
-  collect_memo_data
-  sort_by_created_at
-  find_selected_memo(number)
+get '/memos/:id/edit' do |id|
+  @selected_memo = Memo.find_a_memo(id)
   erb :edit
 end
 
-patch '/memos/:file_number' do
-  find_selected_memo(params[:file_number])
-  @original_file = File.open("./memos/#{@selected_memo['id']}.json") do |file|
-    read_line = file.read
-    JSON.parse(read_line)
-  end
-  @original_file['title'] = params[:memo_title]
-  @original_file['body'] = params[:memo_body]
-  @original_file['edited_at'] = Time.now
-  File.open("./memos/#{@selected_memo['id']}.json", 'w') do |file|
-    JSON.dump(@original_file, file)
-  end
+patch '/memos/:id' do |id|
+  @id = id
+  @inputed_title = params[:memo_title]
+  @inputed_body = params[:memo_body]
+  make_a_connection
+  @connection.exec("UPDATE memos SET title = '#{@inputed_title}', body = '#{@inputed_body}' WHERE id = '#{@id}'")
   erb :edited
 end
 
-delete '/memos/:number' do |_n|
-  find_selected_memo(params[:number])
-  File.delete("./memos/#{@selected_memo['id']}.json")
+delete '/memos/:id' do |id|
+  make_a_connection
+  @connection.exec("DELETE from memos WHERE id = '#{id}'")
   erb :deleted
 end
+
