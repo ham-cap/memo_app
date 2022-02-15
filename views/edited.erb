@@ -1,5 +1,4 @@
 <h2>メモを編集しました</h2>
-<p>No.：<%= @id %></P>
-<p>タイトル：<%= CGI.escapeHTML(@inputed_title) %></p>
-<p>本文： <%= CGI.escapeHTML(@inputed_body) %></p>
+<p>タイトル：<%= CGI.escapeHTML(@new_title) %></p>
+<p>本文： <%= CGI.escapeHTML(@new_body) %></p>
 <a href='/'>TOPへ戻る</a>

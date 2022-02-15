@@ -1,4 +1,3 @@
-<p>No.：<%= @selected_memo.id %></P>
 <p>タイトル：<%= CGI.escapeHTML(@selected_memo.title) %></p>
 <p>本文： <%= CGI.escapeHTML(@selected_memo.body) %></p>
 <a href='/memos/<%= "#{@selected_memo.id}" %>/edit'>編集</a>

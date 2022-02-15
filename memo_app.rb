@@ -8,7 +8,7 @@ require 'byebug'
 require 'cgi'
 require 'pg'
 
-def make_a_connection
+def make_a_connection_to_db
   host = '133.167.114.88'
   port = 5432
   db = 'memodb'
@@ -29,30 +29,17 @@ class Memo
   end
   
   def self.create_a_memo_array
-    make_a_connection
+    make_a_connection_to_db
     all_memo_data = @connection.exec("SELECT * FROM memos").to_a
     all_memo_data.map{|hash| Memo.new(hash)}.reverse
   end
 
   def self.find_a_memo(id)
-    make_a_connection
-    memo_data = @connection.exec("SELECT * FROM memos WHERE id = #{id}").to_a
+    make_a_connection_to_db
+    memo_data = @connection.exec("SELECT * FROM memos WHERE id = $1", [id]).to_a
     memo = memo_data.map{|hash| Memo.new(hash)}
     memo[0]
   end
-end
-
-def sort_by_created_at
-  @memo_files = @memo_files.sort_by { |a| a['created_at'] }
-end
-
-def reverse_memos_order
-  @memo_files = @memo_files.reverse
-end
-
-def find_selected_memo(number)
-  collect_memo_data
-  @selected_memo = @memo_files.find { |file| file['number'] == number.to_i }
 end
 
 get '/' do
@@ -68,8 +55,9 @@ post '/memos' do
   @title = params[:memo_title]
   @body = params[:memo_body]
   @created_at = Time.now
-  make_a_connection
-  @connection.exec("INSERT INTO memos (title, body, created_at) VALUES ('#{@title}', '#{@body}', '#{@created_at}')")
+  make_a_connection_to_db
+  @connection.prepare("create", "INSERT INTO memos (title, body, created_at) VALUES ($1, $2, $3)")
+  @connection.exec_prepared("create", [@title, @body, @created_at])
   erb :created
 end
 
@@ -85,16 +73,22 @@ end
 
 patch '/memos/:id' do |id|
   @id = id
-  @inputed_title = params[:memo_title]
-  @inputed_body = params[:memo_body]
-  make_a_connection
-  @connection.exec("UPDATE memos SET title = '#{@inputed_title}', body = '#{@inputed_body}' WHERE id = '#{@id}'")
+  @new_title = params[:memo_title]
+  @new_body = params[:memo_body]
+  make_a_connection_to_db
+  @connection.prepare("update", "UPDATE memos SET title = $1, body = $2 WHERE id = $3")
+  @connection.exec_prepared("update", [@new_title, @new_body, @id])
   erb :edited
 end
 
 delete '/memos/:id' do |id|
-  make_a_connection
-  @connection.exec("DELETE from memos WHERE id = '#{id}'")
+  make_a_connection_to_db
+  @connection.prepare("delete", "DELETE from memos WHERE id = $1")
+  @connection.exec_prepared("delete", [id])
   erb :deleted
+end
+
+not_found do
+  'このページは存在しません'
 end
 
