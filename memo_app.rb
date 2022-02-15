@@ -21,23 +21,23 @@ class Memo
   attr_reader :id, :title, :body, :created_at, :edited_at
 
   def initialize(hash)
-    @id = hash["id"]
-    @title = hash["title"]
-    @body = hash["body"]
-    @created_at = hash["created_at"]
-    @edited_at = hash["edited_at"]
+    @id = hash['id']
+    @title = hash['title']
+    @body = hash['body']
+    @created_at = hash['created_at']
+    @edited_at = hash['edited_at']
   end
-  
+
   def self.create_a_memo_array
     make_a_connection_to_db
-    all_memo_data = @connection.exec("SELECT * FROM memos").to_a
-    all_memo_data.map{|hash| Memo.new(hash)}.reverse
+    all_memo_data = @connection.exec('SELECT * FROM memos').to_a
+    all_memo_data.map { |hash| Memo.new(hash) }.reverse
   end
 
   def self.find_a_memo(id)
     make_a_connection_to_db
-    memo_data = @connection.exec("SELECT * FROM memos WHERE id = $1", [id]).to_a
-    memo = memo_data.map{|hash| Memo.new(hash)}
+    memo_data = @connection.exec('SELECT * FROM memos WHERE id = $1', [id]).to_a
+    memo = memo_data.map { |hash| Memo.new(hash) }
     memo[0]
   end
 end
@@ -56,8 +56,8 @@ post '/memos' do
   @body = params[:memo_body]
   @created_at = Time.now
   make_a_connection_to_db
-  @connection.prepare("create", "INSERT INTO memos (title, body, created_at) VALUES ($1, $2, $3)")
-  @connection.exec_prepared("create", [@title, @body, @created_at])
+  @connection.prepare('create', 'INSERT INTO memos (title, body, created_at) VALUES ($1, $2, $3)')
+  @connection.exec_prepared('create', [@title, @body, @created_at])
   erb :created
 end
 
@@ -76,19 +76,18 @@ patch '/memos/:id' do |id|
   @new_title = params[:memo_title]
   @new_body = params[:memo_body]
   make_a_connection_to_db
-  @connection.prepare("update", "UPDATE memos SET title = $1, body = $2 WHERE id = $3")
-  @connection.exec_prepared("update", [@new_title, @new_body, @id])
+  @connection.prepare('update', 'UPDATE memos SET title = $1, body = $2 WHERE id = $3')
+  @connection.exec_prepared('update', [@new_title, @new_body, @id])
   erb :edited
 end
 
 delete '/memos/:id' do |id|
   make_a_connection_to_db
-  @connection.prepare("delete", "DELETE from memos WHERE id = $1")
-  @connection.exec_prepared("delete", [id])
+  @connection.prepare('delete', 'DELETE from memos WHERE id = $1')
+  @connection.exec_prepared('delete', [id])
   erb :deleted
 end
 
 not_found do
   'このページは存在しません'
 end
-
