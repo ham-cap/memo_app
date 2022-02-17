@@ -9,12 +9,11 @@ require 'cgi'
 require 'pg'
 
 def make_a_connection_to_db
-  host = '133.167.114.88'
+  host = 'localhost'
   port = 5432
-  db = 'memodb'
+  db = 'postgres'
   user = 'postgres'
-  password = 'm4GxZjes'
-  @connection = PG::Connection.new(host: host, port: port, dbname: db, user: user, password: password)
+  @connection = PG::Connection.new(host: host, port: port, dbname: db, user: user)
 end
 
 class Memo
@@ -75,9 +74,10 @@ patch '/memos/:id' do |id|
   @id = id
   @new_title = params[:memo_title]
   @new_body = params[:memo_body]
+  @edited_at = Time.now
   make_a_connection_to_db
-  @connection.prepare('update', 'UPDATE memos SET title = $1, body = $2 WHERE id = $3')
-  @connection.exec_prepared('update', [@new_title, @new_body, @id])
+  @connection.prepare('update', 'UPDATE memos SET title = $1, body = $2, edited_at = $3 WHERE id = $4')
+  @connection.exec_prepared('update', [@new_title, @new_body, @edited_at, @id])
   erb :edited
 end
 
