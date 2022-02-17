@@ -17,6 +17,13 @@ bundle install
 ```
 bundle exec ruby memo_app.rb 
 ```
+## データベースの設定
+このアプリではPostgreSQLを使用します。
+PostgreSQLをインストールし、以下を実行してください。
+```
+psql postgres -f to_set_up_local_db.sql
+```
+
 ## 以下のURLにアクセスしてください。
 ```
 http://localhost:4567/
