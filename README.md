@@ -8,20 +8,27 @@ git clone -b develop https://github.com/ham-cap/memo_app.git
 
 ```
 ## Gems
-memo_appが動作するにはGemfileに書かれたGemのインストールが必要ですので、以下を実行してください。
+memo_appが動作するにはGemfileに書かれたGemのインストールが必要です。以下を実行してください。
 ```
 bundle install
 ```
+
+## データベースの設定
+このアプリではPostgreSQLを使用します。
+PostgreSQLをインストールし、任意のスーパーユーザーとしてログインのうえ、以下を実行してください。
+```
+CREATE ROLE memoapp WITH LOGIN;
+CREATE DATABASE memodb;
+```
+ターミナルに戻り、memo_appディレクトリ内で以下を実行してください。
+```
+psql -U memoapp -d memodb -f to_set_up_local_db.sql;
+```
+
 ## memo_appの起動
 ローカルサーバー上で起動するため、以下を実行してください。
 ```
 bundle exec ruby memo_app.rb 
-```
-## データベースの設定
-このアプリではPostgreSQLを使用します。
-PostgreSQLをインストールし、以下を実行してください。
-```
-psql postgres -f to_set_up_local_db.sql
 ```
 
 ## 以下のURLにアクセスしてください。

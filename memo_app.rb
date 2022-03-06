@@ -3,7 +3,6 @@
 
 require 'sinatra'
 require 'sinatra/reloader'
-require 'json'
 require 'byebug'
 require 'cgi'
 require 'pg'
@@ -11,10 +10,12 @@ require 'pg'
 def make_a_connection_to_db
   host = 'localhost'
   port = 5432
-  db = 'postgres'
-  user = 'postgres'
-  @connection = PG::Connection.new(host: host, port: port, dbname: db, user: user)
+  db = 'memodb'
+  user = 'memoapp'
+  PG::Connection.new(host: host, port: port, dbname: db, user: user)
 end
+
+Connection = make_a_connection_to_db
 
 class Memo
   attr_reader :id, :title, :body, :created_at, :edited_at
@@ -28,16 +29,29 @@ class Memo
   end
 
   def self.create_a_memo_array
-    make_a_connection_to_db
-    all_memo_data = @connection.exec('SELECT * FROM memos').to_a
-    all_memo_data.map { |hash| Memo.new(hash) }.reverse
+    all_memo_data = Connection.exec('SELECT * FROM memos').to_a
+    all_memo_data.map { |hash| Memo.new(hash) }.sort_by(&:created_at).reverse
   end
 
   def self.find_a_memo(id)
-    make_a_connection_to_db
-    memo_data = @connection.exec('SELECT * FROM memos WHERE id = $1', [id]).to_a
+    memo_data = Connection.exec('SELECT * FROM memos WHERE id = $1', [id]).to_a
     memo = memo_data.map { |hash| Memo.new(hash) }
     memo[0]
+  end
+
+  def self.post_a_memo(title_params, body_params, created_at_params)
+    Connection.prepare('create', 'INSERT INTO memos (title, body, created_at) VALUES ($1, $2, $3)')
+    Connection.exec_prepared('create', [title_params, body_params, created_at_params])
+  end
+
+  def self.edit_a_memo(new_title, new_body, edited_at, id)
+    Connection.prepare('update', 'UPDATE memos SET title = $1, body = $2, edited_at = $3 WHERE id = $4')
+    Connection.exec_prepared('update', [new_title, new_body, edited_at, id])
+  end
+
+  def self.delete_a_memo(id)
+    Connection.prepare('delete', 'DELETE from memos WHERE id = $1')
+    Connection.exec_prepared('delete', [id])
   end
 end
 
@@ -51,13 +65,11 @@ get '/new' do
 end
 
 post '/memos' do
-  @title = params[:memo_title]
-  @body = params[:memo_body]
-  @created_at = Time.now
-  make_a_connection_to_db
-  @connection.prepare('create', 'INSERT INTO memos (title, body, created_at) VALUES ($1, $2, $3)')
-  @connection.exec_prepared('create', [@title, @body, @created_at])
-  erb :created
+  title = params[:memo_title]
+  body = params[:memo_body]
+  created_at = Time.now
+  Memo.post_a_memo(title, body, created_at)
+  redirect '/'
 end
 
 get '/memos/:id' do |id|
@@ -71,21 +83,16 @@ get '/memos/:id/edit' do |id|
 end
 
 patch '/memos/:id' do |id|
-  @id = id
-  @new_title = params[:memo_title]
-  @new_body = params[:memo_body]
-  @edited_at = Time.now
-  make_a_connection_to_db
-  @connection.prepare('update', 'UPDATE memos SET title = $1, body = $2, edited_at = $3 WHERE id = $4')
-  @connection.exec_prepared('update', [@new_title, @new_body, @edited_at, @id])
-  erb :edited
+  new_title = params[:memo_title]
+  new_body = params[:memo_body]
+  edited_at = Time.now
+  Memo.edit_a_memo(new_title, new_body, edited_at, id)
+  redirect '/'
 end
 
 delete '/memos/:id' do |id|
-  make_a_connection_to_db
-  @connection.prepare('delete', 'DELETE from memos WHERE id = $1')
-  @connection.exec_prepared('delete', [id])
-  erb :deleted
+  Memo.delete_a_memo(id)
+  redirect '/'
 end
 
 not_found do
