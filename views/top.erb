@@ -3,5 +3,5 @@
 <% @memo_array.each do |memo| %>
   <a href="/memos/<%= memo.id %>">
     <p><%= "◆ #{CGI.escapeHTML(memo.title)}" %></p>
- </a>
+  </a>
 <% end %>

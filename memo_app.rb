@@ -15,7 +15,13 @@ def make_a_connection_to_db
   PG::Connection.new(host: host, port: port, dbname: db, user: user)
 end
 
-Connection = make_a_connection_to_db
+CONNECTION = make_a_connection_to_db
+
+CONNECTION.prepare('create', 'INSERT INTO memos (title, body, created_at) VALUES ($1, $2, $3)')
+
+CONNECTION.prepare('update', 'UPDATE memos SET title = $1, body = $2, edited_at = $3 WHERE id = $4')
+
+CONNECTION.prepare('delete', 'DELETE FROM memos WHERE id = $1')
 
 class Memo
   attr_reader :id, :title, :body, :created_at, :edited_at
@@ -29,29 +35,26 @@ class Memo
   end
 
   def self.create_a_memo_array
-    all_memo_data = Connection.exec('SELECT * FROM memos').to_a
-    all_memo_data.map { |hash| Memo.new(hash) }.sort_by(&:created_at).reverse
+    all_memo_data = CONNECTION.exec('SELECT * FROM memos ORDER BY created_at DESC').to_a
+    all_memo_data.map { |hash| Memo.new(hash) }
   end
 
   def self.find_a_memo(id)
-    memo_data = Connection.exec('SELECT * FROM memos WHERE id = $1', [id]).to_a
+    memo_data = CONNECTION.exec('SELECT * FROM memos WHERE id = $1', [id]).to_a
     memo = memo_data.map { |hash| Memo.new(hash) }
     memo[0]
   end
 
   def self.post_a_memo(title_params, body_params, created_at_params)
-    Connection.prepare('create', 'INSERT INTO memos (title, body, created_at) VALUES ($1, $2, $3)')
-    Connection.exec_prepared('create', [title_params, body_params, created_at_params])
+    CONNECTION.exec_prepared('create', [title_params, body_params, created_at_params])
   end
 
   def self.edit_a_memo(new_title, new_body, edited_at, id)
-    Connection.prepare('update', 'UPDATE memos SET title = $1, body = $2, edited_at = $3 WHERE id = $4')
-    Connection.exec_prepared('update', [new_title, new_body, edited_at, id])
+    CONNECTION.exec_prepared('update', [new_title, new_body, edited_at, id])
   end
 
   def self.delete_a_memo(id)
-    Connection.prepare('delete', 'DELETE from memos WHERE id = $1')
-    Connection.exec_prepared('delete', [id])
+    CONNECTION.exec_prepared('delete', [id])
   end
 end
 
