@@ -12,6 +12,6 @@ gem "webrick"
 gem "byebug"
 gem "pg"
 
-inherit_gem:
-  rubocop-fjord:
-    - "config/rubocop.yml"
+group :development do
+  gem 'rubocop-fjord', require: false
+end
