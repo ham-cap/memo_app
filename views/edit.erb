@@ -1,8 +1,8 @@
-<form action="/memos/<%= "#{@selected_memo["number"]}" %>" method="POST">
+<form action="/memos/<%= "#{@selected_memo.id}" %>" method="POST">
   <h2>編集</h2>
   <input type="hidden" name="_method" value="PATCH">
-  <p><input name="memo_title" type=text value=<%= @selected_memo["title"] %>></p>
-  <p><textarea name="memo_body" type=text ><%= @selected_memo["body"] %></textarea></p>
+  <p><input name="memo_title" type=text value=<%= CGI.escapeHTML(@selected_memo.title) %>></p>
+  <p><textarea name="memo_body" type=text ><%= CGI.escapeHTML(@selected_memo.body) %></textarea></p>
     <input type="submit" value="保存">
 </form>
 <a href='/'>TOPへ戻る</a>

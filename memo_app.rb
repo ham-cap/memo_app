@@ -3,37 +3,63 @@
 
 require 'sinatra'
 require 'sinatra/reloader'
-require 'json'
 require 'byebug'
 require 'cgi'
+require 'pg'
 
-def collect_memo_data
-  file_names = Dir.glob('*', base: './memos')
-  @memo_files = file_names.map do |name|
-    File.open("./memos/#{name}") do |file|
-      read_line = file.read
-      JSON.parse(read_line)
-    end
+def make_a_connection_to_db
+  host = 'localhost'
+  port = 5432
+  db = 'memodb'
+  user = 'memoapp'
+  PG::Connection.new(host: host, port: port, dbname: db, user: user)
+end
+
+CONNECTION = make_a_connection_to_db
+
+CONNECTION.prepare('create', 'INSERT INTO memos (title, body, created_at) VALUES ($1, $2, $3)')
+
+CONNECTION.prepare('update', 'UPDATE memos SET title = $1, body = $2, edited_at = $3 WHERE id = $4')
+
+CONNECTION.prepare('delete', 'DELETE FROM memos WHERE id = $1')
+
+class Memo
+  attr_reader :id, :title, :body, :created_at, :edited_at
+
+  def initialize(hash)
+    @id = hash['id']
+    @title = hash['title']
+    @body = hash['body']
+    @created_at = hash['created_at']
+    @edited_at = hash['edited_at']
+  end
+
+  def self.create_a_memo_array
+    all_memo_data = CONNECTION.exec('SELECT * FROM memos ORDER BY created_at DESC').to_a
+    all_memo_data.map { |hash| Memo.new(hash) }
+  end
+
+  def self.find_a_memo(id)
+    memo_data = CONNECTION.exec('SELECT * FROM memos WHERE id = $1', [id]).to_a
+    memo = memo_data.map { |hash| Memo.new(hash) }
+    memo[0]
+  end
+
+  def self.post_a_memo(title_params, body_params, created_at_params)
+    CONNECTION.exec_prepared('create', [title_params, body_params, created_at_params])
+  end
+
+  def self.edit_a_memo(new_title, new_body, edited_at, id)
+    CONNECTION.exec_prepared('update', [new_title, new_body, edited_at, id])
+  end
+
+  def self.delete_a_memo(id)
+    CONNECTION.exec_prepared('delete', [id])
   end
 end
 
-def sort_by_created_at
-  @memo_files = @memo_files.sort_by { |a| a['created_at'] }
-end
-
-def reverse_memos_order
-  @memo_files = @memo_files.reverse
-end
-
-def find_selected_memo(number)
-  collect_memo_data
-  @selected_memo = @memo_files.find { |file| file['number'] == number.to_i }
-end
-
 get '/' do
-  collect_memo_data
-  sort_by_created_at
-  reverse_memos_order
+  @memo_array = Memo.create_a_memo_array
   erb :top
 end
 
@@ -42,59 +68,36 @@ get '/new' do
 end
 
 post '/memos' do
-  id = SecureRandom.uuid
-  @title = params[:memo_title]
-  @body = params[:memo_body]
-  @created_at = Time.now
-  File.open('used_number.txt', 'r') do |file|
-    @original_array= file.readlines.map(&:to_i)
-  end
-  File.open('used_number.txt', 'w') do |file|
-    if @original_array.empty?
-      @latest_number = 1
-      file.puts(@latest_number)
-    else
-      @latest_number = @original_array.max + 1
-      file.puts(@latest_number)
-    end
-  end
-  File.open("./memos/#{id}.json", 'w') do |file|
-    JSON.dump({ id: id, number: @latest_number, title: @title, body: @body, created_at: @created_at }, file)
-  end
-  erb :created
+  title = params[:memo_title]
+  body = params[:memo_body]
+  created_at = Time.now
+  Memo.post_a_memo(title, body, created_at)
+  redirect '/'
 end
 
-get '/memos/:number' do |number|
-  collect_memo_data
-  sort_by_created_at
-  find_selected_memo(number)
+get '/memos/:id' do |id|
+  @selected_memo = Memo.find_a_memo(id)
   erb :show
 end
 
-get '/memos/:number/edit' do |number|
-  collect_memo_data
-  sort_by_created_at
-  find_selected_memo(number)
+get '/memos/:id/edit' do |id|
+  @selected_memo = Memo.find_a_memo(id)
   erb :edit
 end
 
-patch '/memos/:file_number' do
-  find_selected_memo(params[:file_number])
-  @original_file = File.open("./memos/#{@selected_memo['id']}.json") do |file|
-    read_line = file.read
-    JSON.parse(read_line)
-  end
-  @original_file['title'] = params[:memo_title]
-  @original_file['body'] = params[:memo_body]
-  @original_file['edited_at'] = Time.now
-  File.open("./memos/#{@selected_memo['id']}.json", 'w') do |file|
-    JSON.dump(@original_file, file)
-  end
-  erb :edited
+patch '/memos/:id' do |id|
+  new_title = params[:memo_title]
+  new_body = params[:memo_body]
+  edited_at = Time.now
+  Memo.edit_a_memo(new_title, new_body, edited_at, id)
+  redirect '/'
 end
 
-delete '/memos/:number' do |_n|
-  find_selected_memo(params[:number])
-  File.delete("./memos/#{@selected_memo['id']}.json")
-  erb :deleted
+delete '/memos/:id' do |id|
+  Memo.delete_a_memo(id)
+  redirect '/'
+end
+
+not_found do
+  'このページは存在しません'
 end
